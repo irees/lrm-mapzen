@@ -24,14 +24,6 @@
           this.options.routingOptions[key] = options[key];
         }
       }
-
-      // Deprecation warnings for Mapzen hosted service.
-      // Make sure people aware of Mapzen hosted services are going down.
-      var mapzenHostedServiceUrl = '//valhalla.mapzen.com';
-      if (this.options.serviceUrl.indexOf(mapzenHostedServiceUrl) > -1) {
-        console.warn('Mapzen is shutting down its services including Turn-by-turn. Read more at https://mapzen.com/blog/shutdown');
-      }
-
       this._accessToken = accessToken;
     },
 
@@ -82,13 +74,13 @@
     },
 
     _routeDone: function(response, inputWaypoints, routingOptions, callback, context) {
-
       var coordinates,
           alts,
           outputWaypoints,
           i;
       context = context || callback;
-      if (response.trip.status !== 0) {
+      console.log(response);
+      if (response.error) {
         callback.call(context, {
           status: response.status,
           message: response.status_message
@@ -96,46 +88,45 @@
         return;
       }
 
+      var itin = response.plan.itineraries[0];
+      console.log(itin);
+
       var insts = [];
       var coordinates = [];
       var shapeIndex =  0;
 
-      for(var i = 0; i < response.trip.legs.length; i++){
-        var coord = polyline.decode(response.trip.legs[i].shape, 6);
-
+      for(var i = 0; i < itin.legs.length; i++){
+        var leg = itin.legs[i];
+        var coord = polyline.decode(leg.legGeometry.points, 5);
         for(var k = 0; k < coord.length; k++){
           coordinates.push(L.latLng(coord[k][0], coord[k][1]));
         }
-
-        for(var j =0; j < response.trip.legs[i].maneuvers.length; j++){
-          var res = response.trip.legs[i].maneuvers[j];
-          res.distance = response.trip.legs[i].maneuvers[j]["length"];
-          res.index = shapeIndex + response.trip.legs[i].maneuvers[j]["begin_shape_index"];
-          insts.push(res);
+        for(var j = 0; j < leg.steps.length; j++){
+          insts.push(leg.steps[j]);
         }
-
         if(routingOptions.costing === 'multimodal') insts = this._unifyTransitManeuver(insts);
-
-        shapeIndex += response.trip.legs[i].maneuvers[response.trip.legs[i].maneuvers.length-1]["begin_shape_index"];
+        // shapeIndex += response.trip.legs[i].maneuvers[response.trip.legs[i].maneuvers.length-1]["begin_shape_index"];
       }
 
-      outputWaypoints = this._toWaypoints(inputWaypoints, response.trip.locations);
+      outputWaypoints = this._toWaypoints(inputWaypoints, [response.plan.from, response.plan.to]);
       var subRoutes;
-      if (routingOptions.costing == 'multimodal') subRoutes = this._getSubRoutes(response.trip.legs)
+      // if (routingOptions.costing == 'multimodal') subRoutes = this._getSubRoutes(response.trip.legs)
 
       alts = [{
-        name: this._trimLocationKey(inputWaypoints[0].latLng) + " , " + this._trimLocationKey(inputWaypoints[inputWaypoints.length-1].latLng) ,
-        unit: response.trip.units,
+        name: this._trimLocationKey(inputWaypoints[0].latLng) + " , " + this._trimLocationKey(inputWaypoints[inputWaypoints.length-1].latLng),
+        unit: "m", // response.trip.units,
         costing: routingOptions.costing,
         coordinates: coordinates,
         subRoutes: subRoutes,
-        instructions: insts,//response.route_instructions ? this._convertInstructions(response.route_instructions) : [],
-        summary: response.trip.summary ? this._convertSummary(response.trip.summary) : [],
+        instructions: this._convertInstructions(insts),
+        summary: this._convertSummary(itin),
         inputWaypoints: inputWaypoints,
         outputWaypoints: outputWaypoints,
         actualWaypoints: outputWaypoints, // DEPRECATE THIS on v2.0
-        waypointIndices: this._clampIndices([0,response.trip.legs[0].maneuvers.length], coordinates)
+        waypointIndices: null // this._clampIndices([0,response.trip.legs[0].maneuvers.length], coordinates)
       }];
+
+      console.log(alts[0]);
 
       callback.call(context, null, alts);
     },
@@ -271,16 +262,16 @@
         }
         locs.push(loc);
       }
-
-      var paramsToPass = L.extend(options, { locations: locs });
-      var params = JSON.stringify(paramsToPass);
-
-      return this.options.serviceUrl + 'json=' +
-              params + '&api_key=' + this._accessToken;
+      if (locs.length < 2) {
+        console.log("need at least 2 waypoints");
+      }
+      var paramsToPass = L.extend(options, { fromPlace: this._locationKey(locs[0]), toPlace: this._locationKey(locs[1]) });
+      var queryString = Object.keys(paramsToPass).map(key => key + '=' + paramsToPass[key]).join('&');
+      return this.options.serviceUrl + 'plan?' + queryString;
     },
 
     _locationKey: function(location) {
-      return location.lat + ',' + location.lng;
+      return location.lat + ',' + location.lon;
     },
 
     _trimLocationKey: function(location){
@@ -295,32 +286,38 @@
     },
 
     _convertSummary: function(route) {
+      var d = 0.0;
+      route.legs.forEach((leg) => {
+        d += leg.distance
+      });
       return {
-        totalDistance: route.length,
-        totalTime: route.time
+        totalDistance: d,
+        totalTime: route.duration
       };
     },
 
-    _convertInstructions: function(instructions) {
+    _convertInstructions: function(insts) {
       var result = [],
           i,
-          instr,
+          inst,
           type,
           driveDir;
 
-      for (i = 0; i < instructions.length; i++) {
-        instr = instructions[i];
-        type = this._drivingDirectionType(instr[0]);
-        driveDir = instr[0].split('-');
+      for (i = 0; i < insts.length; i++) {
+        inst = insts[i];
+        type = "test";
+        driveDir = inst.absoluteDirection;
         if (type) {
           result.push({
-            type: type,
-            distance: instr[2],
-            time: instr[4],
-            road: instr[1],
-            direction: instr[6],
-            exit: driveDir.length > 1 ? driveDir[1] : undefined,
-            index: instr[3]
+            type: 8,
+            instruction: inst.headsign,
+            step: inst,
+            distance: inst.distance,
+            time: inst.duration,
+            road: inst.streetName,
+            direction: inst.absoluteDirection,
+            exit: undefined, // driveDir.length > 1 ? driveDir[1] : undefined,
+            index: i
           });
         }
       }
