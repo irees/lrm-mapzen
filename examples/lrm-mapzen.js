@@ -1,4 +1,4 @@
-(function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
+(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 function corslite(url, callback, cors) {
     var sent = false;
 
@@ -325,7 +325,6 @@ L.Routing.mapzenWaypoint = L.routing.mapzenWaypoint;
     },
 
     formatDistance: function(d /* Number (meters) */) {
-      d = d/1000; // 
       var un = this.options.unitNames,
           v,
         data;
@@ -380,7 +379,8 @@ L.Routing.mapzenWaypoint = L.routing.mapzenWaypoint;
     },
 
     formatInstruction: function(instr, i) {
-      return `${instr.step.relativeDirection} on to ${instr.step.streetName}`
+      // Valhalla returns instructions itself.
+      return instr.instruction;
     },
 
     getIconName: function(instr, i) {
@@ -472,149 +472,149 @@ L.Routing.mapzenWaypoint = L.routing.mapzenWaypoint;
 },{}],5:[function(require,module,exports){
 (function (global){
 (function() {
-  'use strict';
+	'use strict';
 
-  var L = (typeof window !== "undefined" ? window['L'] : typeof global !== "undefined" ? global['L'] : null);
+	var L = (typeof window !== "undefined" ? window['L'] : typeof global !== "undefined" ? global['L'] : null);
 
-  module.exports = L.LayerGroup.extend({
-    // L.Evented is only present in Leaflet v1+
-    // L.Mixin.Events is legacy; was deprecated in Leaflet v1 and started
-    // logging deprecation warnings in console in v1.1
-    includes: L.Evented ? L.Evented.prototype : L.Mixin.Events,
+	module.exports = L.LayerGroup.extend({
+	  // L.Evented is only present in Leaflet v1+
+	  // L.Mixin.Events is legacy; was deprecated in Leaflet v1 and started
+	  // logging deprecation warnings in console in v1.1
+	  includes: L.Evented ? L.Evented.prototype : L.Mixin.Events,
 
-    options: {
-      styles: [
-        {color: 'white', opacity: 0.8, weight: 8},
-        {color: '#06a6d4', opacity: 1, weight: 6}
-      ],
-      missingRouteStyles: [
-        {color: 'black', opacity: 0.15, weight: 8},
-        {color: 'white', opacity: 0.6, weight: 6},
-        {color: 'gray', opacity: 0.8, weight: 4, dashArray: '7,12'}
-      ],
-      addWaypoints: true,
-      extendToWaypoints: true,
-      missingRouteTolerance: 10
-    },
+		options: {
+			styles: [
+				{color: 'white', opacity: 0.8, weight: 8},
+				{color: '#06a6d4', opacity: 1, weight: 6}
+			],
+			missingRouteStyles: [
+				{color: 'black', opacity: 0.15, weight: 8},
+				{color: 'white', opacity: 0.6, weight: 6},
+				{color: 'gray', opacity: 0.8, weight: 4, dashArray: '7,12'}
+			],
+			addWaypoints: true,
+			extendToWaypoints: true,
+			missingRouteTolerance: 10
+		},
 
-    initialize: function(route, options) {
-      L.setOptions(this, options);
-      L.LayerGroup.prototype.initialize.call(this, options);
-      this._route = route;
+		initialize: function(route, options) {
+			L.setOptions(this, options);
+			L.LayerGroup.prototype.initialize.call(this, options);
+			this._route = route;
 
-      if (this.options.extendToWaypoints) {
-        this._extendToWaypoints();
-      }
+			if (this.options.extendToWaypoints) {
+				this._extendToWaypoints();
+			}
 
-      if (route.subRoutes) {
-        for(var i = 0; i < route.subRoutes.length; i++) {
-          if(!route.subRoutes[i].styles) route.subRoutes[i].styles = this.options.styles;
-          this._addSegment(
-            route.subRoutes[i].coordinates,
-            route.subRoutes[i].styles,
-            this.options.addWaypoints);
-        }
-      } else {
-       this._addSegment(
-        route.coordinates,
-        this.options.styles,
-        this.options.addWaypoints);
-      }
-    },
+			if (route.subRoutes) {
+				for(var i = 0; i < route.subRoutes.length; i++) {
+					if(!route.subRoutes[i].styles) route.subRoutes[i].styles = this.options.styles;
+					this._addSegment(
+						route.subRoutes[i].coordinates,
+						route.subRoutes[i].styles,
+						this.options.addWaypoints);
+				}
+			} else {
+			 this._addSegment(
+			 	route.coordinates,
+			 	this.options.styles,
+			 	this.options.addWaypoints);
+			}
+		},
 
-    addTo: function(map) {
-      map.addLayer(this);
-      return this;
-    },
-    getBounds: function() {
-      return L.latLngBounds(this._route.coordinates);
-    },
+		addTo: function(map) {
+			map.addLayer(this);
+			return this;
+		},
+		getBounds: function() {
+			return L.latLngBounds(this._route.coordinates);
+		},
 
-    _findWaypointIndices: function() {
-      var wps = this._route.inputWaypoints,
-          indices = [],
-          i;
-      for (i = 0; i < wps.length; i++) {
-        indices.push(this._findClosestRoutePoint(wps[i].latLng));
-      }
+		_findWaypointIndices: function() {
+			var wps = this._route.inputWaypoints,
+			    indices = [],
+			    i;
+			for (i = 0; i < wps.length; i++) {
+				indices.push(this._findClosestRoutePoint(wps[i].latLng));
+			}
 
-      return indices;
-    },
+			return indices;
+		},
 
-    _findClosestRoutePoint: function(latlng) {
-      var minDist = Number.MAX_VALUE,
-        minIndex,
-          i,
-          d;
+		_findClosestRoutePoint: function(latlng) {
+			var minDist = Number.MAX_VALUE,
+				minIndex,
+			    i,
+			    d;
 
-      for (i = this._route.coordinates.length - 1; i >= 0 ; i--) {
-        // TODO: maybe do this in pixel space instead?
-        d = latlng.distanceTo(this._route.coordinates[i]);
-        if (d < minDist) {
-          minIndex = i;
-          minDist = d;
-        }
-      }
+			for (i = this._route.coordinates.length - 1; i >= 0 ; i--) {
+				// TODO: maybe do this in pixel space instead?
+				d = latlng.distanceTo(this._route.coordinates[i]);
+				if (d < minDist) {
+					minIndex = i;
+					minDist = d;
+				}
+			}
 
-      return minIndex;
-    },
+			return minIndex;
+		},
 
-    _extendToWaypoints: function() {
-      var wps = this._route.inputWaypoints,
-        wpIndices = this._getWaypointIndices(),
-          i,
-          wpLatLng,
-          routeCoord;
+		_extendToWaypoints: function() {
+			var wps = this._route.inputWaypoints,
+				wpIndices = this._getWaypointIndices(),
+			    i,
+			    wpLatLng,
+			    routeCoord;
 
-      for (i = 0; i < wps.length; i++) {
-        wpLatLng = wps[i].latLng;
-        routeCoord = L.latLng(this._route.coordinates[wpIndices[i]]);
-        if (wpLatLng.distanceTo(routeCoord) >
-          this.options.missingRouteTolerance) {
-          this._addSegment([wpLatLng, routeCoord],
-            this.options.missingRouteStyles);
-        }
-      }
-    },
+			for (i = 0; i < wps.length; i++) {
+				wpLatLng = wps[i].latLng;
+				routeCoord = L.latLng(this._route.coordinates[wpIndices[i]]);
+				if (wpLatLng.distanceTo(routeCoord) >
+					this.options.missingRouteTolerance) {
+					this._addSegment([wpLatLng, routeCoord],
+						this.options.missingRouteStyles);
+				}
+			}
+		},
 
-    _addSegment: function(coords, styles, mouselistener) {
-      var i,
-        pl;
-      for (i = 0; i < styles.length; i++) {
-        pl = L.polyline(coords, styles[i]);
-        this.addLayer(pl);
-        if (mouselistener) {
-          pl.on('mousedown', this._onLineTouched, this);
-        }
-      }
-    },
+		_addSegment: function(coords, styles, mouselistener) {
+			var i,
+				pl;
+			for (i = 0; i < styles.length; i++) {
+				pl = L.polyline(coords, styles[i]);
+				this.addLayer(pl);
+				if (mouselistener) {
+					pl.on('mousedown', this._onLineTouched, this);
+				}
+			}
+		},
 
-    _findNearestWpBefore: function(i) {
-      var wpIndices = this._getWaypointIndices(),
-        j = wpIndices.length - 1;
-      while (j >= 0 && wpIndices[j] > i) {
-        j--;
-      }
+		_findNearestWpBefore: function(i) {
+			var wpIndices = this._getWaypointIndices(),
+				j = wpIndices.length - 1;
+			while (j >= 0 && wpIndices[j] > i) {
+				j--;
+			}
 
-      return j;
-    },
+			return j;
+		},
 
-    _onLineTouched: function(e) {
-      var afterIndex = this._findNearestWpBefore(this._findClosestRoutePoint(e.latlng));
-      this.fire('linetouched', {
-        afterIndex: afterIndex,
-        latlng: e.latlng
-      });
-    },
+		_onLineTouched: function(e) {
+			var afterIndex = this._findNearestWpBefore(this._findClosestRoutePoint(e.latlng));
+			this.fire('linetouched', {
+				afterIndex: afterIndex,
+				latlng: e.latlng
+			});
+		},
 
-    _getWaypointIndices: function() {
-      if (!this._wpIndices) {
-        this._wpIndices = this._route.waypointIndices || this._findWaypointIndices();
-      }
+		_getWaypointIndices: function() {
+			if (!this._wpIndices) {
+				this._wpIndices = this._route.waypointIndices || this._findWaypointIndices();
+			}
 
-      return this._wpIndices;
-    }
-  });
+			return this._wpIndices;
+		}
+	});
 
 })();
 
@@ -697,13 +697,13 @@ L.Routing.mapzenWaypoint = L.routing.mapzenWaypoint;
     },
 
     _routeDone: function(response, inputWaypoints, routingOptions, callback, context) {
+
       var coordinates,
           alts,
           outputWaypoints,
           i;
       context = context || callback;
-      console.log(response);
-      if (response.error) {
+      if (response.trip.status !== 0) {
         callback.call(context, {
           status: response.status,
           message: response.status_message
@@ -711,45 +711,46 @@ L.Routing.mapzenWaypoint = L.routing.mapzenWaypoint;
         return;
       }
 
-      var itin = response.plan.itineraries[0];
-      console.log(itin);
-
       var insts = [];
       var coordinates = [];
       var shapeIndex =  0;
 
-      for(var i = 0; i < itin.legs.length; i++){
-        var leg = itin.legs[i];
-        var coord = polyline.decode(leg.legGeometry.points, 5);
+      for(var i = 0; i < response.trip.legs.length; i++){
+        var coord = polyline.decode(response.trip.legs[i].shape, 6);
+
         for(var k = 0; k < coord.length; k++){
           coordinates.push(L.latLng(coord[k][0], coord[k][1]));
         }
-        for(var j = 0; j < leg.steps.length; j++){
-          insts.push(leg.steps[j]);
+
+        for(var j =0; j < response.trip.legs[i].maneuvers.length; j++){
+          var res = response.trip.legs[i].maneuvers[j];
+          res.distance = response.trip.legs[i].maneuvers[j]["length"];
+          res.index = shapeIndex + response.trip.legs[i].maneuvers[j]["begin_shape_index"];
+          insts.push(res);
         }
+
         if(routingOptions.costing === 'multimodal') insts = this._unifyTransitManeuver(insts);
-        // shapeIndex += response.trip.legs[i].maneuvers[response.trip.legs[i].maneuvers.length-1]["begin_shape_index"];
+
+        shapeIndex += response.trip.legs[i].maneuvers[response.trip.legs[i].maneuvers.length-1]["begin_shape_index"];
       }
 
-      outputWaypoints = this._toWaypoints(inputWaypoints, [response.plan.from, response.plan.to]);
+      outputWaypoints = this._toWaypoints(inputWaypoints, response.trip.locations);
       var subRoutes;
-      // if (routingOptions.costing == 'multimodal') subRoutes = this._getSubRoutes(response.trip.legs)
+      if (routingOptions.costing == 'multimodal') subRoutes = this._getSubRoutes(response.trip.legs)
 
       alts = [{
-        name: this._trimLocationKey(inputWaypoints[0].latLng) + " , " + this._trimLocationKey(inputWaypoints[inputWaypoints.length-1].latLng),
-        unit: "m", // response.trip.units,
+        name: this._trimLocationKey(inputWaypoints[0].latLng) + " , " + this._trimLocationKey(inputWaypoints[inputWaypoints.length-1].latLng) ,
+        unit: response.trip.units,
         costing: routingOptions.costing,
         coordinates: coordinates,
         subRoutes: subRoutes,
-        instructions: this._convertInstructions(insts),
-        summary: this._convertSummary(itin),
+        instructions: insts,//response.route_instructions ? this._convertInstructions(response.route_instructions) : [],
+        summary: response.trip.summary ? this._convertSummary(response.trip.summary) : [],
         inputWaypoints: inputWaypoints,
         outputWaypoints: outputWaypoints,
         actualWaypoints: outputWaypoints, // DEPRECATE THIS on v2.0
-        waypointIndices: null // this._clampIndices([0,response.trip.legs[0].maneuvers.length], coordinates)
+        waypointIndices: this._clampIndices([0,response.trip.legs[0].maneuvers.length], coordinates)
       }];
-
-      console.log(alts[0]);
 
       callback.call(context, null, alts);
     },
@@ -885,16 +886,16 @@ L.Routing.mapzenWaypoint = L.routing.mapzenWaypoint;
         }
         locs.push(loc);
       }
-      if (locs.length < 2) {
-        console.log("need at least 2 waypoints");
-      }
-      var paramsToPass = L.extend(options, { fromPlace: this._locationKey(locs[0]), toPlace: this._locationKey(locs[1]) });
-      var queryString = Object.keys(paramsToPass).map(key => key + '=' + paramsToPass[key]).join('&');
-      return this.options.serviceUrl + 'plan?' + queryString;
+
+      var paramsToPass = L.extend(options, { locations: locs });
+      var params = JSON.stringify(paramsToPass);
+
+      return this.options.serviceUrl + 'json=' +
+              params + '&api_key=' + this._accessToken;
     },
 
     _locationKey: function(location) {
-      return location.lat + ',' + location.lon;
+      return location.lat + ',' + location.lng;
     },
 
     _trimLocationKey: function(location){
@@ -909,38 +910,32 @@ L.Routing.mapzenWaypoint = L.routing.mapzenWaypoint;
     },
 
     _convertSummary: function(route) {
-      var d = 0.0;
-      route.legs.forEach((leg) => {
-        d += leg.distance
-      });
       return {
-        totalDistance: d,
-        totalTime: route.duration
+        totalDistance: route.length,
+        totalTime: route.time
       };
     },
 
-    _convertInstructions: function(insts) {
+    _convertInstructions: function(instructions) {
       var result = [],
           i,
-          inst,
+          instr,
           type,
           driveDir;
 
-      for (i = 0; i < insts.length; i++) {
-        inst = insts[i];
-        type = "test";
-        driveDir = inst.absoluteDirection;
+      for (i = 0; i < instructions.length; i++) {
+        instr = instructions[i];
+        type = this._drivingDirectionType(instr[0]);
+        driveDir = instr[0].split('-');
         if (type) {
           result.push({
-            type: 8,
-            instruction: inst.headsign,
-            step: inst,
-            distance: inst.distance,
-            time: inst.duration,
-            road: inst.streetName,
-            direction: inst.absoluteDirection,
-            exit: undefined, // driveDir.length > 1 ? driveDir[1] : undefined,
-            index: i
+            type: type,
+            distance: instr[2],
+            time: instr[4],
+            road: instr[1],
+            direction: instr[6],
+            exit: driveDir.length > 1 ? driveDir[1] : undefined,
+            index: instr[3]
           });
         }
       }
