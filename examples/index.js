@@ -9,10 +9,10 @@ var control = L.Routing.control({
   ],
   // You can get your own Mapzen turn-by-turn & search API key from the Mapzen developer portal (https://mapzen.com/developers/)
   fitSelectedRoutes: true,
-  reverseWaypoints: true,
+  // reverseWaypoints: true,
   router: L.Routing.mapzen('valhalla-PVA4Y8g', {serviceUrl: "http://localhost:8000/otp/routers/default/", costing: 'auto'}),
-  formatter: new L.Routing.mapzenFormatter(),
-  summaryTemplate:'<div class="route-info {costing}">{distance}, {time}</div>'
+  // formatter: new L.Routing.mapzenFormatter(),
+  // summaryTemplate:'<div class="route-info {costing}">{distance}, {time}</div>'
 }).addTo(map);
 
 L.Routing.errorControl(control).addTo(map);
