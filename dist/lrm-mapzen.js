@@ -509,6 +509,7 @@ L.Routing.mapzenWaypoint = L.routing.mapzenWaypoint;
       if (route.subRoutes) {
         for(var i = 0; i < route.subRoutes.length; i++) {
           if(!route.subRoutes[i].styles) route.subRoutes[i].styles = this.options.styles;
+          console.log("subRoute", i, route.subRoutes[i]);
           this._addSegment(
             route.subRoutes[i].coordinates,
             route.subRoutes[i].styles,
@@ -704,15 +705,17 @@ L.Routing.mapzenWaypoint = L.routing.mapzenWaypoint;
       var insts = [];
       var coordinates = [];
       var shapeIndex = 0;
+      var subRoutes = [];
       for (var i = 0; i < itin.legs.length; i++) {
-        var [coords, leginsts] = this._convertLeg(itin.legs[i]);
+        var [coords, legInsts, subRoute] = this._convertLeg(itin.legs[i]);
         // Leg instruction indexes are relative to that leg
-        for (var j = 0; j < leginsts.length; j++) {
-          leginsts[j].index += shapeIndex;
+        for (var j = 0; j < legInsts.length; j++) {
+          legInsts[j].index += shapeIndex;
         }
         coordinates = coordinates.concat(coords);
-        insts = insts.concat(leginsts);
+        insts = insts.concat(legInsts);
         shapeIndex += coords.length;
+        subRoutes.push(subRoute);
       }
       outputWaypoints = this._toWaypoints([response.plan.from, response.plan.to]);
       alts = [{
@@ -723,7 +726,7 @@ L.Routing.mapzenWaypoint = L.routing.mapzenWaypoint;
         //
         unit: "m", // response.trip.units,
         costing: routingOptions.costing,
-        subRoutes: null,
+        subRoutes: subRoutes,
         inputWaypoints: inputWaypoints,
         outputWaypoints: outputWaypoints,
         waypointIndices: null
@@ -796,6 +799,9 @@ L.Routing.mapzenWaypoint = L.routing.mapzenWaypoint;
       for (var k = 0; k < coords.length; k++) {
         coordinates.push(L.latLng(coords[k][0], coords[k][1]));
       }
+      var subRoute = {
+        coordinates: coords,
+      };  
       if (leg.agencyId) {
         insts.push({
           type: "Transit",
@@ -817,7 +823,20 @@ L.Routing.mapzenWaypoint = L.routing.mapzenWaypoint;
           duration: null,
           text: `Exit the vehicle at ${leg.to.name}`,
           index: 0
-        })
+        });
+        var color = leg.routeColor;
+        console.log("routeColor?", color);
+        if (color) { 
+          color = '#' + color.toUpperCase();
+          console.log("set color to:", color);
+        } else {
+          color = "#ff0000";
+        }
+        subRoute = {
+          coordinates: coords,
+          styles: [{color: 'white', opacity: 0.8, weight: 8}, {color: color, opacity: 1, weight: 6}],
+        };  
+        console.log(subRoute);
       }
       var lastStep = 0;
       for (var j = 0; j < leg.steps.length; j++) {
@@ -833,7 +852,7 @@ L.Routing.mapzenWaypoint = L.routing.mapzenWaypoint;
         }
         insts.push(inst);
       }
-      return [coordinates, insts];
+      return [coordinates, insts, subRoute];
     },
 
     _convertInstruction: function (inst) {
