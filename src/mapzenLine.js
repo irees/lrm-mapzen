@@ -36,7 +36,6 @@
       if (route.subRoutes) {
         for(var i = 0; i < route.subRoutes.length; i++) {
           if(!route.subRoutes[i].styles) route.subRoutes[i].styles = this.options.styles;
-          console.log("subRoute", i, route.subRoutes[i]);
           this._addSegment(
             route.subRoutes[i].coordinates,
             route.subRoutes[i].styles,
