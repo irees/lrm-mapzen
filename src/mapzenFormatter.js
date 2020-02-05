@@ -26,6 +26,7 @@
     },
 
     formatDistance: function(d /* Number (meters) */) {
+      d = d/1000; // 
       var un = this.options.unitNames,
           v,
         data;
@@ -80,8 +81,7 @@
     },
 
     formatInstruction: function(instr, i) {
-      // Valhalla returns instructions itself.
-      return instr.instruction;
+      return `${instr.step.relativeDirection} on to ${instr.step.streetName}`
     },
 
     getIconName: function(instr, i) {
